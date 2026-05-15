@@ -1,0 +1,1089 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="見積補助">
+<meta name="theme-color" content="#1a1a2e">
+<title>見積補助アプリ</title>
+
+<!-- PWA manifest インライン -->
+<script>
+const manifestData = {
+  name: "見積補助アプリ",
+  short_name: "見積補助",
+  start_url: "./",
+  display: "standalone",
+  background_color: "#f5f5f7",
+  theme_color: "#1a1a2e",
+  icons: [
+    { src: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect width='192' height='192' rx='32' fill='%231a1a2e'/><text y='130' x='30' font-size='120'>🔧</text></svg>", sizes: "192x192", type: "image/svg+xml" }
+  ]
+};
+const blob = new Blob([JSON.stringify(manifestData)], {type: 'application/json'});
+const manifestURL = URL.createObjectURL(blob);
+document.addEventListener('DOMContentLoaded', () => {
+  const link = document.createElement('link');
+  link.rel = 'manifest';
+  link.href = manifestURL;
+  document.head.appendChild(link);
+});
+</script>
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap');
+
+:root {
+  --bg: #f0f1f5;
+  --card: #ffffff;
+  --primary: #c0392b;
+  --primary-dark: #962d22;
+  --navy: #1a1a2e;
+  --green: #1a6b3c;
+  --blue: #1a4d8f;
+  --text: #1a1a2e;
+  --sub: #6b7280;
+  --border: #e5e7eb;
+  --chip-bg: #f3f4f6;
+  --shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+body {
+  font-family: 'Noto Sans JP', 'Hiragino Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  min-height: -webkit-fill-available;
+}
+
+/* ===== SCREENS ===== */
+.screen { display: none; padding: 12px 14px 90px; max-width: 520px; margin: 0 auto; }
+.screen.active { display: block; }
+
+/* ===== HEADER ===== */
+.app-header {
+  background: var(--navy);
+  color: #fff;
+  border-radius: 16px;
+  padding: 16px;
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.app-header .icon { font-size: 30px; }
+.app-header .title { font-size: 18px; font-weight: 700; }
+.app-header .sub { font-size: 11px; color: #9ca3af; margin-top: 2px; }
+
+/* ===== BACK BAR ===== */
+.back-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0 14px;
+}
+.back-btn {
+  background: none;
+  border: none;
+  color: var(--primary);
+  font-size: 15px;
+  font-family: inherit;
+  cursor: pointer;
+  padding: 4px 0;
+  font-weight: 500;
+}
+.screen-title { font-size: 16px; font-weight: 700; }
+
+/* ===== CARD ===== */
+.card {
+  background: var(--card);
+  border-radius: 14px;
+  padding: 14px;
+  margin-bottom: 12px;
+  box-shadow: var(--shadow);
+}
+.card-label {
+  font-size: 11px;
+  color: var(--sub);
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+
+/* ===== INPUTS ===== */
+.field-row { margin-bottom: 10px; }
+.field-label { display: block; font-size: 13px; color: var(--sub); margin-bottom: 4px; }
+input[type=text], input[type=number], textarea, select {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1.5px solid var(--border);
+  font-size: 15px;
+  font-family: inherit;
+  background: #fafafa;
+  color: var(--text);
+  outline: none;
+  transition: border-color 0.2s;
+}
+input:focus, textarea:focus, select:focus { border-color: var(--primary); }
+textarea { resize: vertical; line-height: 1.5; }
+
+/* ===== BUTTONS ===== */
+.btn-primary {
+  width: 100%;
+  padding: 15px;
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  border-radius: 14px;
+  font-size: 16px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  margin-top: 4px;
+  transition: background 0.15s, transform 0.1s;
+  active: transform scale(0.98);
+}
+.btn-primary:active { transform: scale(0.97); background: var(--primary-dark); }
+.btn-primary.green { background: var(--green); }
+.btn-primary.blue { background: var(--blue); }
+.btn-primary.navy { background: var(--navy); }
+
+.btn-row { display: flex; gap: 10px; margin-top: 10px; }
+.btn-row .btn-primary { margin-top: 0; }
+
+/* ===== SELECTED PARTS LIST ===== */
+.selected-list { margin-top: 4px; }
+.selected-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--card);
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin-bottom: 8px;
+  box-shadow: var(--shadow);
+}
+.selected-item-info { flex: 1; }
+.selected-item-name { font-size: 14px; font-weight: 600; }
+.selected-item-detail { font-size: 12px; color: var(--sub); margin-top: 2px; }
+.selected-item-actions { display: flex; gap: 8px; }
+.btn-edit {
+  padding: 6px 14px;
+  background: #e8f0fe;
+  color: var(--blue);
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-family: inherit;
+  cursor: pointer;
+  font-weight: 500;
+}
+.btn-del {
+  padding: 6px 10px;
+  background: #fde8e8;
+  color: var(--primary);
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+/* ===== CATEGORY ACCORDION ===== */
+.cat-header {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: none;
+  border: none;
+  font-size: 15px;
+  font-weight: 700;
+  font-family: inherit;
+  color: var(--navy);
+  cursor: pointer;
+  padding: 4px 0 10px;
+  text-align: left;
+}
+.cat-parts { display: flex; flex-wrap: wrap; gap: 8px; padding-bottom: 4px; }
+
+.part-chip {
+  padding: 8px 14px;
+  border-radius: 20px;
+  border: 1.5px solid var(--border);
+  background: var(--chip-bg);
+  font-size: 13px;
+  font-family: inherit;
+  cursor: pointer;
+  color: var(--text);
+  transition: all 0.15s;
+}
+.part-chip.selected {
+  background: var(--green);
+  color: #fff;
+  border-color: var(--green);
+}
+
+/* ===== CUSTOM PART ROW ===== */
+.custom-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: flex-end; }
+.custom-row input[type=text]:first-child { flex: 2; min-width: 120px; }
+.custom-row input[type=text]:nth-child(2) { flex: 1; min-width: 60px; }
+.btn-add {
+  padding: 10px 16px;
+  background: var(--navy);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-size: 14px;
+  font-family: inherit;
+  cursor: pointer;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* ===== QTY STEPPER ===== */
+.qty-row { display: flex; align-items: center; gap: 14px; }
+.qty-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  border: 1.5px solid var(--border);
+  background: var(--chip-bg);
+  font-size: 22px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  font-family: inherit;
+}
+.qty-num { font-size: 22px; font-weight: 700; min-width: 50px; text-align: center; }
+.qty-unit { color: var(--sub); font-size: 14px; }
+.qty-input {
+  width: 80px !important;
+  text-align: center;
+  font-size: 20px !important;
+  font-weight: 700;
+  padding: 6px 8px !important;
+}
+
+/* ===== STATUS TEMPLATES ===== */
+.tmpl-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+.tmpl-chip {
+  padding: 7px 13px;
+  border-radius: 16px;
+  border: 1.5px solid var(--border);
+  background: var(--chip-bg);
+  font-size: 12px;
+  font-family: inherit;
+  cursor: pointer;
+  color: var(--text);
+  line-height: 1.4;
+  text-align: left;
+  transition: all 0.15s;
+}
+.tmpl-chip.active {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+}
+
+/* ===== PHOTOS ===== */
+.photo-btn {
+  width: 100%;
+  padding: 12px;
+  background: #f0f4ff;
+  color: var(--blue);
+  border: 1.5px dashed #a0b4d6;
+  border-radius: 12px;
+  font-size: 14px;
+  font-family: inherit;
+  cursor: pointer;
+  margin-bottom: 10px;
+}
+.photo-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+.photo-wrap { position: relative; }
+.photo-wrap img { width: 80px; height: 80px; object-fit: cover; border-radius: 10px; border: 1px solid var(--border); }
+.photo-rm {
+  position: absolute;
+  top: -6px; right: -6px;
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  font-size: 11px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ===== PREVIEW ===== */
+.preview-card {
+  background: #fff;
+  border-radius: 14px;
+  padding: 18px;
+  margin-bottom: 12px;
+  box-shadow: var(--shadow);
+  border: 1px solid var(--border);
+}
+.preview-title { font-weight: 700; font-size: 16px; margin-bottom: 8px; }
+.preview-info { font-size: 13px; color: #444; margin-bottom: 3px; }
+.preview-part { border-bottom: 1px solid var(--border); padding-bottom: 12px; margin-bottom: 12px; }
+.preview-part:last-child { border-bottom: none; margin-bottom: 0; }
+.preview-part-name { font-weight: 700; font-size: 14px; }
+.preview-status { color: var(--primary); font-size: 13px; margin-top: 4px; }
+.preview-note { color: var(--sub); font-size: 13px; margin-top: 2px; }
+.preview-footer { font-size: 12px; color: var(--sub); border-top: 1px solid var(--border); padding-top: 10px; margin-top: 4px; }
+
+/* ===== TOAST ===== */
+.toast {
+  position: fixed;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%) translateY(80px);
+  background: var(--navy);
+  color: #fff;
+  padding: 12px 24px;
+  border-radius: 30px;
+  font-size: 14px;
+  font-weight: 600;
+  z-index: 9999;
+  transition: transform 0.3s ease;
+  pointer-events: none;
+}
+.toast.show { transform: translateX(-50%) translateY(0); }
+
+/* ===== INSTALL BANNER ===== */
+.install-banner {
+  background: linear-gradient(135deg, #1a1a2e, #2d3561);
+  color: #fff;
+  border-radius: 14px;
+  padding: 14px 16px;
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.install-banner-text { font-size: 13px; line-height: 1.5; }
+.install-banner-text strong { display: block; font-size: 14px; margin-bottom: 2px; }
+.btn-install {
+  padding: 8px 16px;
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-size: 13px;
+  font-family: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.btn-dismiss { background: none; border: none; color: #9ca3af; font-size: 18px; cursor: pointer; }
+
+@media print {
+  .no-print { display: none !important; }
+  .screen { padding: 0; }
+  body { background: white; }
+}
+</style>
+</head>
+<body>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- ===== SCREEN: HOME ===== -->
+<div class="screen active" id="screen-home">
+  <div class="app-header">
+    <div class="icon">🔧</div>
+    <div>
+      <div class="title">見積補助アプリ</div>
+      <div class="sub">交換推奨部品チェッカー</div>
+    </div>
+  </div>
+
+  <div id="install-banner" class="install-banner" style="display:none;">
+    <div class="install-banner-text">
+      <strong>📲 ホーム画面に追加</strong>
+      アプリとして使えます
+    </div>
+    <button class="btn-install" id="btn-install-pwa">追加する</button>
+    <button class="btn-dismiss" id="btn-dismiss-install">✕</button>
+  </div>
+
+  <div id="ios-install-hint" style="display:none;" class="card">
+    <div class="card-label">📲 ホーム画面への追加方法</div>
+    <div style="font-size:13px; line-height:1.8; color:#444;">
+      <b>iPhone / iPad の場合：</b><br>
+      Safari で開く → 下の <b>共有ボタン（□↑）</b> をタップ<br>
+      → <b>「ホーム画面に追加」</b> を選択<br><br>
+      <b>Android の場合：</b><br>
+      Chrome で開く → 右上メニュー（⋮）<br>
+      → <b>「ホーム画面に追加」</b> を選択
+    </div>
+    <button class="btn-dismiss" style="float:right; margin-top:-10px;" onclick="document.getElementById('ios-install-hint').style.display='none'">✕</button>
+  </div>
+
+  <div class="card">
+    <div class="card-label">車両情報（任意）</div>
+    <div class="field-row">
+      <label class="field-label">車両番号</label>
+      <input type="text" id="v-plate" placeholder="例：大阪 500 あ 1234">
+    </div>
+    <div class="field-row">
+      <label class="field-label">車種</label>
+      <input type="text" id="v-model" placeholder="例：CX-5">
+    </div>
+    <div style="display:flex; gap:10px;">
+      <div class="field-row" style="flex:1;">
+        <label class="field-label">年式</label>
+        <input type="text" id="v-year" placeholder="例：2019">
+      </div>
+      <div class="field-row" style="flex:1;">
+        <label class="field-label">走行距離(km)</label>
+        <input type="text" id="v-mileage" placeholder="例：85000">
+      </div>
+    </div>
+  </div>
+
+  <button class="btn-primary navy" onclick="showScreen('select')">＋ 部品を選択する</button>
+
+  <div id="selected-section" style="display:none; margin-top:16px;">
+    <div class="card-label" style="padding:0 2px 6px;">選択済み部品 <span id="selected-count"></span>件</div>
+    <div class="selected-list" id="selected-list"></div>
+    <div class="btn-row">
+      <button class="btn-primary" style="background:var(--navy);" onclick="showScreen('select')">＋ 追加</button>
+      <button class="btn-primary green" onclick="showScreen('preview')">📄 出力プレビュー</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== SCREEN: SELECT ===== -->
+<div class="screen" id="screen-select">
+  <div class="back-bar">
+    <button class="back-btn" onclick="showScreen('home')">← 戻る</button>
+    <span class="screen-title">部品を選択</span>
+  </div>
+
+  <div class="card">
+    <div class="card-label">リストにない部品を追加</div>
+    <div class="custom-row">
+      <input type="text" id="custom-name" placeholder="部品名">
+      <input type="text" id="custom-unit" placeholder="単位" value="個" style="max-width:70px;">
+      <button class="btn-add" onclick="addCustomPart()">追加</button>
+    </div>
+  </div>
+
+  <div id="category-list"></div>
+
+  <button class="btn-primary" onclick="showScreen('home')">完了 <span id="done-count"></span></button>
+</div>
+
+<!-- ===== SCREEN: FORM ===== -->
+<div class="screen" id="screen-form">
+  <div class="back-bar">
+    <button class="back-btn" onclick="saveAndBack()">← 保存して戻る</button>
+    <span class="screen-title" id="form-title"></span>
+  </div>
+
+  <div class="card">
+    <div class="card-label">数量</div>
+    <div class="qty-row">
+      <button class="qty-btn" onclick="changeQty(-1)">－</button>
+      <input type="number" class="qty-input" id="qty-input" value="1" min="0.1" step="0.1">
+      <span class="qty-unit" id="qty-unit"></span>
+    </div>
+    <div style="font-size:11px; color:var(--sub); margin-top:8px;">小数点入力可（例：3.5）</div>
+  </div>
+
+  <div class="card" id="tire-date-card" style="display:none;">
+    <div class="card-label">🛞 タイヤ詳細情報</div>
+
+    <div class="field-row">
+      <label class="field-label">タイヤサイズ</label>
+      <input type="text" id="tire-size-input" placeholder="例：215/60R16 95H">
+    </div>
+
+    <div style="display:flex; gap:8px;">
+      <div class="field-row" style="flex:1;">
+        <label class="field-label">メーカー</label>
+        <input type="text" id="tire-maker-input" placeholder="例：ブリヂストン">
+      </div>
+      <div class="field-row" style="flex:1;">
+        <label class="field-label">商品名</label>
+        <input type="text" id="tire-product-input" placeholder="例：REGNO GR-XIII">
+      </div>
+    </div>
+
+    <div style="margin-top:4px;">
+      <label class="field-label">製造年週（4桁）</label>
+      <div style="font-size:11px; color:var(--sub); margin-bottom:6px;">タイヤ側面の4桁数字（例：2352 → 2023年第52週製造）</div>
+      <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+        <input type="text" id="tire-date-input" placeholder="例：2352" maxlength="4" inputmode="numeric"
+          oninput="updateTireDateLabel(this.value)" style="max-width:120px;">
+        <div id="tire-date-label" style="font-size:13px; color:var(--primary); font-weight:600;"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" id="battery-detail-card" style="display:none;">
+    <div class="card-label">🔋 バッテリー詳細情報</div>
+    <div class="field-row">
+      <label class="field-label">バッテリーサイズ</label>
+      <input type="text" id="battery-size-input" placeholder="例：55B24L / 80D23L">
+    </div>
+    <div class="field-row">
+      <label class="field-label">使用開始時期</label>
+      <input type="text" id="battery-start-input" placeholder="例：2021年3月 / 令和3年3月">
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-label">状態テンプレート（複数選択可）</div>
+    <div class="tmpl-grid" id="tmpl-grid"></div>
+    <div style="margin-top:12px;">
+      <div class="card-label">状態テキスト（直接編集可）</div>
+      <textarea id="status-text" rows="3" placeholder="テンプレートを選ぶか直接入力"></textarea>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-label">写真を追加</div>
+    <input type="file" id="photo-input" accept="image/*" multiple style="display:none;" onchange="handlePhotos(event)">
+    <button class="photo-btn" onclick="document.getElementById('photo-input').click()">📷 カメラ・ギャラリーから追加</button>
+    <div class="photo-grid" id="photo-grid"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-label">備考</div>
+    <textarea id="note-text" rows="2" placeholder="自由記入"></textarea>
+  </div>
+
+  <button class="btn-primary" onclick="saveAndBack()">保存して戻る</button>
+</div>
+
+<!-- ===== SCREEN: PREVIEW ===== -->
+<div class="screen" id="screen-preview">
+  <div class="back-bar no-print">
+    <button class="back-btn" onclick="showScreen('home')">← 戻る</button>
+    <span class="screen-title">出力プレビュー</span>
+  </div>
+
+  <div class="preview-card" id="preview-content"></div>
+
+  <div class="btn-row no-print">
+    <button class="btn-primary" onclick="copyText()" id="copy-btn">📋 テキストコピー</button>
+    <button class="btn-primary blue" onclick="showPdfGuide()">🖨️ PDF保存</button>
+  </div>
+</div>
+
+<!-- PDF案内モーダル -->
+<div id="pdf-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:9998; align-items:flex-end; justify-content:center;">
+  <div style="background:#fff; border-radius:20px 20px 0 0; padding:24px 20px 40px; width:100%; max-width:520px;">
+    <div style="font-size:17px; font-weight:700; margin-bottom:6px;">📄 PDF保存の手順</div>
+    <div style="font-size:12px; color:#888; margin-bottom:20px;">お使いの端末に合わせて操作してください</div>
+
+    <div style="background:#f0f4ff; border-radius:12px; padding:14px; margin-bottom:12px;">
+      <div style="font-weight:700; font-size:14px; margin-bottom:8px;">🍎 iPhone の場合</div>
+      <div style="font-size:13px; line-height:2; color:#333;">
+        ① 画面下の <b>共有ボタン（□↑）</b> をタップ<br>
+        ② <b>「PDFを作成」</b> を選択<br>
+        ③ 右上の <b>「保存」</b> または <b>「共有」</b> でファイルに保存
+      </div>
+    </div>
+
+    <div style="background:#f0fff4; border-radius:12px; padding:14px; margin-bottom:20px;">
+      <div style="font-weight:700; font-size:14px; margin-bottom:8px;">🤖 Android の場合</div>
+      <div style="font-size:13px; line-height:2; color:#333;">
+        ① 右上メニュー <b>（⋮）</b> をタップ<br>
+        ② <b>「共有」→「印刷」</b> を選択<br>
+        ③ プリンター選択で <b>「PDFに保存」</b> を選択
+      </div>
+    </div>
+
+    <button class="btn-primary" onclick="document.getElementById('pdf-modal').style.display='none'">閉じる</button>
+  </div>
+</div>
+
+<script>
+// ===== DATA =====
+const PARTS_MASTER = [
+  { category: "エンジン系", parts: [
+    { id:"p001", name:"エンジンオイル", unit:"L" },
+    { id:"p002", name:"オイルフィルター", unit:"個" },
+    { id:"p003", name:"エアフィルター", unit:"個" },
+    { id:"p004", name:"スパークプラグ", unit:"本" },
+    { id:"p005", name:"タイミングベルト", unit:"本" },
+    { id:"p006", name:"ウォーターポンプ", unit:"個" },
+    { id:"p007", name:"カムシャフトシール", unit:"個" },
+    { id:"p008", name:"クランクシャフトシール", unit:"個" },
+    { id:"p009", name:"ドレンガスケット", unit:"個" },
+  ]},
+  { category: "ブレーキ系", parts: [
+    { id:"p010", name:"ブレーキパッド（前）", unit:"セット" },
+    { id:"p011", name:"ブレーキパッド（後）", unit:"セット" },
+    { id:"p012", name:"ブレーキディスク（前）", unit:"枚" },
+    { id:"p013", name:"ブレーキディスク（後）", unit:"枚" },
+    { id:"p014", name:"ブレーキフルード", unit:"L" },
+    { id:"p015", name:"ブレーキキャリパー", unit:"個" },
+    { id:"p016", name:"ブレーキホース", unit:"本" },
+  ]},
+  { category: "タイヤ・ホイール", parts: [
+    { id:"p020", name:"タイヤ", unit:"本", hasTireDate: true },
+    { id:"p021", name:"タイヤバルブ", unit:"個" },
+    { id:"p022", name:"ホイールバランスウエイト", unit:"g" },
+  ]},
+  { category: "サスペンション系", parts: [
+    { id:"p030", name:"ショックアブソーバー", unit:"本" },
+    { id:"p031", name:"コイルスプリング", unit:"本" },
+    { id:"p032", name:"ブッシュ類", unit:"個" },
+    { id:"p033", name:"ボールジョイント", unit:"個" },
+    { id:"p034", name:"タイロッドエンド", unit:"個" },
+    { id:"p035", name:"スタビライザーリンク", unit:"個" },
+  ]},
+  { category: "電装系", parts: [
+    { id:"p040", name:"バッテリー", unit:"個", hasBatteryDetail: true },
+    { id:"p041", name:"オルタネーター", unit:"個" },
+    { id:"p042", name:"スターター", unit:"個" },
+    { id:"p043", name:"ヘッドライトバルブ", unit:"個" },
+    { id:"p044", name:"ヒューズ", unit:"個" },
+    { id:"p045", name:"キーレスバッテリー", unit:"個" },
+  ]},
+  { category: "冷却系", parts: [
+    { id:"p050", name:"ラジエーター", unit:"個" },
+    { id:"p051", name:"LLC（クーラント）", unit:"L" },
+    { id:"p052", name:"サーモスタット", unit:"個" },
+    { id:"p053", name:"ラジエーターホース（上）", unit:"本" },
+    { id:"p054", name:"ラジエーターホース（下）", unit:"本" },
+  ]},
+  { category: "消耗品・その他", parts: [
+    { id:"p060", name:"ワイパーブレード", unit:"本" },
+    { id:"p061", name:"エアコンフィルター", unit:"個" },
+    { id:"p062", name:"ドレンボルト", unit:"個" },
+    { id:"p063", name:"ガスケット類", unit:"式" },
+    { id:"p064", name:"Vベルト", unit:"本" },
+    { id:"p065", name:"ファンベルト", unit:"本" },
+    { id:"p066", name:"発煙筒", unit:"個" },
+    { id:"p067", name:"パンク修理剤", unit:"本" },
+  ]},
+];
+
+const STATUS_TEMPLATES = [
+  "交換推奨時期を超過しています",
+  "著しい摩耗が確認されました",
+  "軽度の摩耗が確認されました（経過観察）",
+  "液漏れが確認されました",
+  "亀裂・破損が確認されました",
+  "腐食・さびが確認されました",
+  "動作不良が確認されました",
+  "基準値を下回っています",
+  "異音が発生しています",
+  "次回点検時に要確認",
+];
+
+// ===== STATE =====
+let selectedParts = [];  // { id, partId, name, unit, qty, status, photos:[], note, tireDate, tireSize, tireMaker, tireProduct, hasTireDate, batterySize, batteryStart, hasBatteryDetail }
+let editingId = null;
+let expandedCat = null;
+let deferredInstallPrompt = null;
+
+const genId = () => Math.random().toString(36).slice(2,9);
+
+// ===== PWA INSTALL =====
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  document.getElementById('install-banner').style.display = 'flex';
+});
+window.addEventListener('appinstalled', () => {
+  document.getElementById('install-banner').style.display = 'none';
+  showToast('✅ ホーム画面に追加しました');
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+  // iOS Safari 判定
+  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  const isInStandalone = window.navigator.standalone === true;
+  if (isIOS && !isInStandalone) {
+    document.getElementById('ios-install-hint').style.display = 'block';
+  }
+
+  document.getElementById('btn-install-pwa').addEventListener('click', async () => {
+    if (!deferredInstallPrompt) return;
+    deferredInstallPrompt.prompt();
+    const result = await deferredInstallPrompt.userChoice;
+    deferredInstallPrompt = null;
+    document.getElementById('install-banner').style.display = 'none';
+  });
+  document.getElementById('btn-dismiss-install').addEventListener('click', () => {
+    document.getElementById('install-banner').style.display = 'none';
+  });
+
+  buildCategoryList();
+});
+
+// ===== SCREEN =====
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + name).classList.add('active');
+  window.scrollTo(0, 0);
+
+  if (name === 'home') renderHome();
+  if (name === 'select') renderSelect();
+  if (name === 'preview') renderPreview();
+}
+
+// ===== HOME =====
+function renderHome() {
+  const list = document.getElementById('selected-list');
+  const sec = document.getElementById('selected-section');
+  const cnt = document.getElementById('selected-count');
+
+  if (selectedParts.length === 0) { sec.style.display = 'none'; return; }
+  sec.style.display = 'block';
+  cnt.textContent = selectedParts.length;
+
+  list.innerHTML = selectedParts.map(p => `
+    <div class="selected-item">
+      <div class="selected-item-info">
+        <div class="selected-item-name">${p.name}</div>
+        <div class="selected-item-detail">
+          数量: ${p.qty} ${p.unit}
+          ${p.status ? ' ／ ' + p.status.slice(0,20) + (p.status.length>20?'…':'') : ''}
+          ${p.photos.length > 0 ? ` 📷${p.photos.length}` : ''}
+        </div>
+      </div>
+      <div class="selected-item-actions">
+        <button class="btn-edit" onclick="openForm('${p.id}')">編集</button>
+        <button class="btn-del" onclick="removePart('${p.id}')">✕</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function removePart(id) {
+  selectedParts = selectedParts.filter(p => p.id !== id);
+  renderHome();
+}
+
+// ===== SELECT =====
+function buildCategoryList() {
+  const el = document.getElementById('category-list');
+  el.innerHTML = PARTS_MASTER.map(cat => `
+    <div class="card" id="cat-${cat.category}">
+      <button class="cat-header" onclick="toggleCat('${cat.category}')">
+        <span>${cat.category}</span>
+        <span id="arrow-${cat.category}">▼</span>
+      </button>
+      <div class="cat-parts" id="parts-${cat.category}" style="display:none;"></div>
+    </div>
+  `).join('');
+}
+
+function renderSelect() {
+  document.getElementById('done-count').textContent = selectedParts.length > 0 ? `（${selectedParts.length}件選択中）` : '';
+  PARTS_MASTER.forEach(cat => {
+    const grid = document.getElementById('parts-' + cat.category);
+    if (!grid) return;
+    grid.innerHTML = cat.parts.map(part => {
+      const sel = selectedParts.find(p => p.partId === part.id);
+      return `<button class="part-chip ${sel ? 'selected' : ''}" onclick="togglePart('${part.id}','${part.name}','${part.unit}',${!!part.hasTireDate},${!!part.hasBatteryDetail})">${sel ? '✓ ' : ''}${part.name}</button>`;
+    }).join('');
+  });
+}
+
+function toggleCat(cat) {
+  const grid = document.getElementById('parts-' + cat);
+  const arrow = document.getElementById('arrow-' + cat);
+  if (grid.style.display === 'none') {
+    grid.style.display = 'flex';
+    arrow.textContent = '▲';
+    renderSelect();
+  } else {
+    grid.style.display = 'none';
+    arrow.textContent = '▼';
+  }
+}
+
+function togglePart(partId, name, unit, hasTireDate, hasBatteryDetail) {
+  const exists = selectedParts.find(p => p.partId === partId);
+  if (exists) {
+    selectedParts = selectedParts.filter(p => p.partId !== partId);
+    showToast(`「${name}」を解除`);
+  } else {
+    selectedParts.push({ id: genId(), partId, name, unit, qty: 1, status: '', photos: [], note: '', tireDate: '', tireSize: '', tireMaker: '', tireProduct: '', hasTireDate: !!hasTireDate, batterySize: '', batteryStart: '', hasBatteryDetail: !!hasBatteryDetail });
+    showToast(`「${name}」を追加`);
+  }
+  renderSelect();
+}
+
+function addCustomPart() {
+  const name = document.getElementById('custom-name').value.trim();
+  const unit = document.getElementById('custom-unit').value.trim() || '個';
+  if (!name) { showToast('部品名を入力してください'); return; }
+  selectedParts.push({ id: genId(), partId: null, name, unit, qty: 1, status: '', photos: [], note: '' });
+  document.getElementById('custom-name').value = '';
+  showToast(`「${name}」を追加`);
+  renderSelect();
+}
+
+// ===== FORM =====
+function openForm(id) {
+  editingId = id;
+  const p = selectedParts.find(x => x.id === id);
+  document.getElementById('form-title').textContent = p.name;
+  document.getElementById('qty-input').value = p.qty;
+  document.getElementById('qty-unit').textContent = p.unit;
+  document.getElementById('status-text').value = p.status;
+  document.getElementById('note-text').value = p.note;
+
+  // バッテリー詳細欄の表示制御
+  const batteryCard = document.getElementById('battery-detail-card');
+  if (p.hasBatteryDetail) {
+    batteryCard.style.display = 'block';
+    document.getElementById('battery-size-input').value = p.batterySize || '';
+    document.getElementById('battery-start-input').value = p.batteryStart || '';
+  } else {
+    batteryCard.style.display = 'none';
+    document.getElementById('battery-size-input').value = '';
+    document.getElementById('battery-start-input').value = '';
+  }
+  const tireDateCard = document.getElementById('tire-date-card');
+  const tireDateInput = document.getElementById('tire-date-input');
+  const tireDateLabel = document.getElementById('tire-date-label');
+  if (p.hasTireDate) {
+    tireDateCard.style.display = 'block';
+    tireDateInput.value = p.tireDate || '';
+    updateTireDateLabel(p.tireDate || '');
+    document.getElementById('tire-size-input').value = p.tireSize || '';
+    document.getElementById('tire-maker-input').value = p.tireMaker || '';
+    document.getElementById('tire-product-input').value = p.tireProduct || '';
+  } else {
+    tireDateCard.style.display = 'none';
+    tireDateInput.value = '';
+    tireDateLabel.textContent = '';
+    document.getElementById('tire-size-input').value = '';
+    document.getElementById('tire-maker-input').value = '';
+    document.getElementById('tire-product-input').value = '';
+  }
+
+  // テンプレートチップ
+  const grid = document.getElementById('tmpl-grid');
+  grid.innerHTML = STATUS_TEMPLATES.map(tmpl => `
+    <button class="tmpl-chip ${p.status.includes(tmpl) ? 'active' : ''}"
+      onclick="toggleTemplate(this,'${tmpl.replace(/'/g,"\\'")}')">
+      ${tmpl}
+    </button>
+  `).join('');
+
+  // 写真
+  renderPhotoGrid(p.photos);
+  showScreen('form');
+}
+
+function changeQty(delta) {
+  const input = document.getElementById('qty-input');
+  const current = parseFloat(input.value) || 1;
+  const next = Math.max(0.1, Math.round((current + delta) * 10) / 10);
+  input.value = next;
+}
+
+function toggleTemplate(btn, tmpl) {
+  const ta = document.getElementById('status-text');
+  let cur = ta.value;
+  if (btn.classList.contains('active')) {
+    btn.classList.remove('active');
+    cur = cur.replace(tmpl, '').replace(/^[。\s]+|[。\s]+$/g, '').replace(/。+/g, '。');
+  } else {
+    btn.classList.add('active');
+    cur = cur ? cur.replace(/。?$/, '') + '。' + tmpl : tmpl;
+  }
+  ta.value = cur;
+}
+
+function handlePhotos(e) {
+  const p = selectedParts.find(x => x.id === editingId);
+  const files = Array.from(e.target.files);
+  files.forEach(file => {
+    const reader = new FileReader();
+    reader.onload = ev => {
+      p.photos.push(ev.target.result);
+      renderPhotoGrid(p.photos);
+    };
+    reader.readAsDataURL(file);
+  });
+  e.target.value = '';
+}
+
+function renderPhotoGrid(photos) {
+  document.getElementById('photo-grid').innerHTML = photos.map((src, i) => `
+    <div class="photo-wrap">
+      <img src="${src}" alt="写真${i+1}">
+      <button class="photo-rm" onclick="removePhoto(${i})">✕</button>
+    </div>
+  `).join('');
+}
+
+function removePhoto(idx) {
+  const p = selectedParts.find(x => x.id === editingId);
+  p.photos.splice(idx, 1);
+  renderPhotoGrid(p.photos);
+}
+
+function saveAndBack() {
+  const p = selectedParts.find(x => x.id === editingId);
+  if (p) {
+    p.qty = parseFloat(document.getElementById('qty-input').value) || 1;
+    p.status = document.getElementById('status-text').value;
+    p.note = document.getElementById('note-text').value;
+    if (p.hasBatteryDetail) {
+      p.batterySize = document.getElementById('battery-size-input').value;
+      p.batteryStart = document.getElementById('battery-start-input').value;
+    }
+    if (p.hasTireDate) {
+      p.tireDate = document.getElementById('tire-date-input').value;
+      p.tireSize = document.getElementById('tire-size-input').value;
+      p.tireMaker = document.getElementById('tire-maker-input').value;
+      p.tireProduct = document.getElementById('tire-product-input').value;
+    }
+  }
+  showToast('保存しました');
+  showScreen('home');
+}
+
+// ===== PREVIEW =====
+function renderPreview() {
+  const today = new Date().toLocaleDateString('ja-JP', { year:'numeric', month:'long', day:'numeric' });
+  const plate = document.getElementById('v-plate').value;
+  const model = document.getElementById('v-model').value;
+  const year = document.getElementById('v-year').value;
+  const mileage = document.getElementById('v-mileage').value;
+
+  let html = `
+    <div class="preview-title">【点検結果・交換推奨部品リスト】</div>
+    <div class="preview-info">作成日：${today}</div>
+    ${plate ? `<div class="preview-info">車両番号：${plate}</div>` : ''}
+    ${model ? `<div class="preview-info">車種：${model}</div>` : ''}
+    ${year ? `<div class="preview-info">年式：${year}年</div>` : ''}
+    ${mileage ? `<div class="preview-info">走行距離：${mileage} km</div>` : ''}
+    <div style="margin-top:16px;">
+  `;
+
+  selectedParts.forEach((p, i) => {
+    html += `
+      <div class="preview-part">
+        <div class="preview-part-name">【${i+1}】${p.name}　${p.qty} ${p.unit}</div>
+        ${p.status ? `<div class="preview-status">状態：${p.status}</div>` : ''}
+        ${p.hasBatteryDetail && (p.batterySize || p.batteryStart) ? `
+          <div style="color:#1a4d8f; font-size:13px; margin-top:4px;">
+            ${p.batterySize ? `サイズ：${p.batterySize}　` : ''}${p.batteryStart ? `使用開始：${p.batteryStart}` : ''}
+          </div>` : ''}
+        ${p.hasTireDate && (p.tireSize || p.tireMaker || p.tireProduct) ? `
+          <div style="color:#1a4d8f; font-size:13px; margin-top:4px;">
+            ${p.tireSize ? `サイズ：${p.tireSize}　` : ''}${p.tireMaker ? `メーカー：${p.tireMaker}　` : ''}${p.tireProduct ? `商品名：${p.tireProduct}` : ''}
+          </div>` : ''}
+        ${p.hasTireDate && p.tireDate ? `<div style="color:#1a4d8f; font-size:13px; margin-top:2px;">製造年週：${p.tireDate}（${parseTireDate(p.tireDate)}）</div>` : ''}
+        ${p.note ? `<div class="preview-note">備考：${p.note}</div>` : ''}
+        ${p.photos.length > 0 ? `
+          <div class="photo-grid" style="margin-top:8px;">
+            ${p.photos.map(src => `<img src="${src}" style="width:80px;height:80px;object-fit:cover;border-radius:8px;border:1px solid var(--border);">`).join('')}
+          </div>` : ''}
+      </div>
+    `;
+  });
+
+  html += `</div><div class="preview-footer">※上記は点検結果に基づく交換推奨部品です。詳しくはスタッフまでご相談ください。</div>`;
+  document.getElementById('preview-content').innerHTML = html;
+}
+
+function generateText() {
+  const today = new Date().toLocaleDateString('ja-JP', { year:'numeric', month:'long', day:'numeric' });
+  const plate = document.getElementById('v-plate').value;
+  const model = document.getElementById('v-model').value;
+  const year = document.getElementById('v-year').value;
+  const mileage = document.getElementById('v-mileage').value;
+
+  let lines = ['【点検結果・交換推奨部品リスト】', `作成日：${today}`];
+  if (plate) lines.push(`車両番号：${plate}`);
+  if (model) lines.push(`車種：${model}`);
+  if (year) lines.push(`年式：${year}年`);
+  if (mileage) lines.push(`走行距離：${mileage} km`);
+  lines.push('');
+  selectedParts.forEach((p, i) => {
+    lines.push(`【${i+1}】${p.name}　${p.qty} ${p.unit}`);
+    if (p.status) lines.push(`　状態：${p.status}`);
+    if (p.hasBatteryDetail && p.batterySize) lines.push(`　バッテリーサイズ：${p.batterySize}`);
+    if (p.hasBatteryDetail && p.batteryStart) lines.push(`　使用開始：${p.batteryStart}`);
+    if (p.hasTireDate && p.tireSize) lines.push(`　サイズ：${p.tireSize}`);
+    if (p.hasTireDate && p.tireMaker) lines.push(`　メーカー：${p.tireMaker}`);
+    if (p.hasTireDate && p.tireProduct) lines.push(`　商品名：${p.tireProduct}`);
+    if (p.hasTireDate && p.tireDate) lines.push(`　製造年週：${p.tireDate}（${parseTireDate(p.tireDate)}）`);
+    if (p.note) lines.push(`　備考：${p.note}`);
+  });
+  lines.push('');
+  lines.push('※上記は点検結果に基づく交換推奨部品です。詳しくはスタッフまでご相談ください。');
+  return lines.join('\n');
+}
+
+function copyText() {
+  navigator.clipboard.writeText(generateText()).then(() => {
+    showToast('✅ クリップボードにコピーしました');
+    const btn = document.getElementById('copy-btn');
+    btn.textContent = '✓ コピー済み';
+    setTimeout(() => btn.textContent = '📋 テキストコピー', 2500);
+  }).catch(() => {
+    // フォールバック
+    const ta = document.createElement('textarea');
+    ta.value = generateText();
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    showToast('✅ コピーしました');
+  });
+}
+
+// ===== TIRE DATE =====
+function parseTireDate(val) {
+  if (!val || val.length !== 4) return '';
+  const week = parseInt(val.slice(0, 2));
+  const year = parseInt('20' + val.slice(2, 4));
+  if (isNaN(week) || isNaN(year) || week < 1 || week > 53) return '形式エラー';
+  const currentYear = new Date().getFullYear();
+  const age = currentYear - year;
+  let ageStr = age === 0 ? '今年製造' : `製造から約${age}年`;
+  return `${year}年 第${week}週製造・${ageStr}`;
+}
+
+function updateTireDateLabel(val) {
+  const label = document.getElementById('tire-date-label');
+  if (!label) return;
+  label.textContent = val.length === 4 ? parseTireDate(val) : '';
+}
+
+// ===== PDF GUIDE =====
+function showPdfGuide() {
+  const modal = document.getElementById('pdf-modal');
+  modal.style.display = 'flex';
+  // モーダル外タップで閉じる
+  modal.onclick = (e) => { if (e.target === modal) modal.style.display = 'none'; };
+}
+
+// ===== TOAST =====
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2200);
+}
+</script>
+</body>
+</html>
