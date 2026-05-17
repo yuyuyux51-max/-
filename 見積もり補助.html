@@ -285,9 +285,9 @@ textarea{resize:vertical;line-height:1.5}
       <!-- 発煙筒有効期限 -->
       <div style="margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--border);">
         <div style="font-size:13px;font-weight:700;color:var(--navy);margin-bottom:4px;">🔴 発煙筒 有効期限（4桁）</div>
-        <div style="font-size:11px;color:var(--sub);margin-bottom:8px;">製造年月の4桁（例：0321 → 2021年3月製造）</div>
+        <div style="font-size:11px;color:var(--sub);margin-bottom:8px;">年月の4桁（例：2603 → 2026年3月）</div>
         <div style="display:flex;gap:10px;align-items:center;">
-          <input type="text" id="v-flare-exp" maxlength="4" inputmode="numeric" placeholder="例：0321" style="max-width:120px;text-align:center;font-size:16px;" oninput="updateFlareLabel(this.value)">
+          <input type="text" id="v-flare-exp" maxlength="4" inputmode="numeric" placeholder="例：2603" style="max-width:120px;text-align:center;font-size:16px;" oninput="updateFlareLabel(this.value)">
           <div id="flare-label" style="font-size:13px;color:var(--primary);font-weight:600;"></div>
         </div>
       </div>
@@ -295,9 +295,9 @@ textarea{resize:vertical;line-height:1.5}
       <!-- パンク修理剤期限 -->
       <div style="margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--border);">
         <div style="font-size:13px;font-weight:700;color:var(--navy);margin-bottom:4px;">🟡 パンク修理剤 有効期限（4桁）</div>
-        <div style="font-size:11px;color:var(--sub);margin-bottom:8px;">製造年月の4桁（例：0321 → 2021年3月製造）</div>
+        <div style="font-size:11px;color:var(--sub);margin-bottom:8px;">年月の4桁（例：2603 → 2026年3月）</div>
         <div style="display:flex;gap:10px;align-items:center;">
-          <input type="text" id="v-sealant-exp" maxlength="4" inputmode="numeric" placeholder="例：0321" style="max-width:120px;text-align:center;font-size:16px;" oninput="updateSealantLabel(this.value)">
+          <input type="text" id="v-sealant-exp" maxlength="4" inputmode="numeric" placeholder="例：2603" style="max-width:120px;text-align:center;font-size:16px;" oninput="updateSealantLabel(this.value)">
           <div id="sealant-label" style="font-size:13px;color:var(--primary);font-weight:600;"></div>
         </div>
       </div>
@@ -1014,18 +1014,16 @@ function updateMfgLabel(pos, val) {
   if(el) el.textContent = val.length===4 ? parseTireMfg(val) : '';
 }
 
-// ===== 発煙筒・パンク修理剤 有効期限（4桁：MMYYで変換） =====
+// ===== 発煙筒・パンク修理剤 有効期限（4桁：YYMMで変換） =====
 function parseExpiry4(val) {
   if(!val||val.length!==4) return '';
-  const mm=parseInt(val.slice(0,2)),yy=parseInt(val.slice(2,4));
-  if(isNaN(mm)||isNaN(yy)||mm<1||mm>12) return '形式エラー';
+  const yy=parseInt(val.slice(0,2)),mm=parseInt(val.slice(2,4));
+  if(isNaN(yy)||isNaN(mm)||mm<1||mm>12) return '形式エラー';
   const year=2000+yy;
-  const expDate=new Date(year,mm-1,1);
-  // 発煙筒は製造から4年が有効期限が多い
-  const exp4=new Date(year+4,mm-1,1);
   const now=new Date();
-  const expired4 = exp4 < now;
-  return `${year}年${mm}月製造 / 有効期限目安:${year+4}年${mm}月${expired4?' ⚠️期限超過':''}`;
+  const expDate=new Date(year,mm-1,1);
+  const expired = expDate < now;
+  return `${year}年${mm}月${expired?' ⚠️期限超過':''}`;
 }
 function updateFlareLabel(val) {
   const el=document.getElementById('flare-label');
